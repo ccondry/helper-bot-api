@@ -1,0 +1,24 @@
+[Unit]
+# this is the daemon for running the helper-bot-api REST API node.js service
+Description=GoCMS web portal REST API
+# make sure we have network connection before starting
+After=network.target
+
+[Service]
+# run as administrator:administrator
+User=administrator
+Group=administrator
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+# if extra CA certs trust are needed, specify them like this
+Environment=NODE_EXTRA_CA_CERTS=certs/ca.pem
+# working directory where the code lives
+WorkingDirectory=/opt/dcloud/helper-bot-api
+# run the application with node
+ExecStart=/usr/bin/node src/index
+# restart if we crash
+Restart=on-failure
+
+[Install]
+# don't start until we are in the multi-user run level of linux
+WantedBy=multi-user.target
