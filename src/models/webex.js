@@ -1,15 +1,15 @@
 const fetch = require('./fetch')
 
-async function getRoomName (roomId, token) {
+async function getRoomName ({roomId, token}) {
   try {
-    const room = await getRoom(roomId, token)
+    const room = await getRoom({roomId, token})
     return room.title
   } catch (e) {
     throw e
   }
 }
 
-async function getRoom (roomId, token) {
+async function getRoom ({roomId, token}) {
   const url = 'https://webexapis.com/v1/rooms/' + roomId
   const options = {
     headers: {
