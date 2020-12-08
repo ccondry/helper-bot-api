@@ -7,12 +7,9 @@ const hostname = os.hostname()
 const name = pkg.name
 // the version of this software
 const version = pkg.version
-// a function to get the current time from the Name API
-const getTime = () => new Date().getTime()
 
 module.exports = {
   hostname,
   name,
-  version,
-  getTime
+  version
 }

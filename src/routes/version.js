@@ -5,14 +5,10 @@ const environment = require('../models/environment')
 // get the version of this software
 router.get('/', async (req, res, next) => {
   try {
-    // get server time
-    const time = await environment.getTime()
     // add software version and server we are running on
     const data = {
       name: environment.name,
-      version: environment.version,
-      hostname: environment.hostname,
-      time
+      version: environment.version
     }
     return res.status(200).send(data)
   } catch (e) {

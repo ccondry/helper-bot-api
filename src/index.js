@@ -88,6 +88,9 @@ app.use('/api/v1/valid', require('./routes/valid'))
 // manage helper bot users
 app.use('/api/v1/user', require('./routes/user'))
 
+// manage helper bot rooms
+app.use('/api/v1/room', require('./routes/room'))
+
 // start listening
 app.listen(port, () => {
   const message = `${environment.name} version ${environment.version} service started on ${environment.hostname}. Listening on port ${port}.`
