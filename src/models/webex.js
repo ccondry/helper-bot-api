@@ -5,6 +5,7 @@ async function getRoomName ({roomId, token}) {
     const room = await getRoom({roomId, token})
     return room.title
   } catch (e) {
+    console.log(`webex.getRoomName failed for roomId ${roomId} with token ${token}`)
     throw e
   }
 }

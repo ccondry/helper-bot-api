@@ -21,36 +21,38 @@ router.get('/', async function (req, res, next) {
     const users = await db.find('helper', 'user', query, projection)
     return res.status(200).send(users)
   } catch (error) {
-    console.log('get instances failed:', error.message)
+    console.log('get bot users failed:', error.message)
     return res.status(500).send(error.message)
   }
 })
 
-// get room details for a specified user
-router.get('/:userId/room/:roomId', async function (req, res, next) {
+// update helper bot user details
+router.put('/:id', async function (req, res, next) {
   if (!isAdmin(req.user)) {
     const message = 'you do not have permission to access this resource'
     return res.status(403).send({message})
   }
   try {
+    // find the existing helper bot user details
     const query = {
-      _id: db.ObjectID(req.params.userId)
+      _id: db.ObjectID(req.params.id)
     }
-    // get helper bot users
     const user = await db.findOne('helper', 'user', query)
     if (!user) {
-      const message = `user ${req.params.userId} not found`
+      const message = `user ${req.params.id} not found`
       return res.status(404).send({message})
     }
-    // get room info using helper bot user's token
-    const room = await fetch(`https://webexapis.com/v1/rooms/${roomId}`, {
-      headers: {
-        Authorization: `Bearer ${user.token.access_token}`
-      }
-    })
-    return res.status(200).send(room)
+    // remove _id from body
+    delete req.body._id
+    // update the user in database
+    const updates = {
+      $set: req.body
+    }
+    await db.updateOne('helper', 'user', query, updates)
+    // done
+    return res.status(200).send()
   } catch (error) {
-    console.log('get instances failed:', error.message)
+    console.log('update bot user failed:', error.message)
     return res.status(500).send({message: error.message})
   }
 })
