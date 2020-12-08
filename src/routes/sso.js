@@ -43,7 +43,7 @@ router.post('/', async (req, res, next) => {
     teamsLogger.log(message)
     return res.status(500).send({message})
   }
-  // remove memberof, which can be a long list of data
+  // remove memberof list, which can be a long list of data
   delete me.memberof
   // set admin flag
   me.isAdmin = isAdmin(me)
