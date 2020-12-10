@@ -69,7 +69,7 @@ router.get('/', async function (req, res, next) {
     // return rooms list
     return res.status(200).send(rooms)
   } catch (e) {
-    console.log('get rooms failed:', e)
+    console.log('get rooms failed:', e.message)
     return res.status(500).send({message: e.message})
   }
 })

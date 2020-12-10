@@ -20,6 +20,16 @@ async function getRoom ({roomId, token}) {
   return fetch(url, options)
 }
 
+async function getWebhooks ({token}) {
+  const url = 'https://webexapis.com/v1/webhooks/'
+  const options = {
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  }
+  return fetch(url, options)
+}
+
 async function joinRoom ({roomId, email, token}) {
   const url = 'https://webexapis.com/v1/memberships/'
   const options = {
@@ -35,8 +45,29 @@ async function joinRoom ({roomId, email, token}) {
   return fetch(url, options)
 }
 
+async function createWebhook ({token, secret}) {
+  const url = 'https://webexapis.com/v1/webhooks/'
+  const options = {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token
+    },
+    body: {
+      name: 'mm-helper',
+      targetUrl: 'https://mm-helper.cxdemo.net/api/v1/webhook',
+      resource: 'messages',
+      event: 'created',
+      // filter: '',
+      secret
+    }
+  }
+  return fetch(url, options)
+}
+
 module.exports = {
   getRoom,
   getRoomName,
-  joinRoom
+  joinRoom,
+  getWebhooks,
+  createWebhook
 }
