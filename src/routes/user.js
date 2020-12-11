@@ -6,6 +6,32 @@ const isAdmin = require('../models/is-admin')
 const oauth2 = require('../models/oauth2')
 const webex = require('../models/webex')
 
+// get matching bearer token for specified user ID
+async function getToken (id) {
+  try {
+    // find helper bot user
+    const user = await getUser(id)
+    // return their token
+    return user.token.access_token
+  } catch (e) {
+    throw e
+  }
+}
+
+// get matching bearer token for specified user ID
+async function getUser (id) {
+  // find helper bot token for the room ID
+  let _id
+  try {
+    _id = db.ObjectID(id)
+  } catch (e) {
+    throw Error(`Failed to create mongo ObjectID from input "${id}"`)
+  }
+  const query = {_id}
+  // find helper bot user
+  return db.findOne('helper', 'user', query)
+}
+
 // list helper bot users
 router.get('/', async function (req, res, next) {
   if (!isAdmin(req.user)) {
@@ -101,31 +127,31 @@ router.delete('/:id', async function (req, res, next) {
   }
 })
 
-// get matching bearer token for specified user ID
-async function getToken (id) {
-  try {
-    // find helper bot user
-    const user = await getUser(id)
-    // return their token
-    return user.token.access_token
-  } catch (e) {
-    throw e
+// admin get user room membership list
+router.get('/:id/membership', async function (req, res, next) {
+  if (!isAdmin(req.user)) {
+    const message = 'you do not have permission to access this resource'
+    return res.status(403).send({message})
   }
-}
-
-// get matching bearer token for specified user ID
-async function getUser (id) {
-  // find helper bot token for the room ID
-  let _id
-  try {
-    _id = db.ObjectID(id)
-  } catch (e) {
-    throw Error(`Failed to create mongo ObjectID from input "${id}"`)
+  if (req.params.id.length !== 24) {
+    // invalid ID
+    const message = `the ID you specified is invalid: "${req.params.id}"`
+    return res.status(400).send({message})
   }
-  const query = {_id}
-  // find helper bot user
-  return db.findOne('helper', 'user', query)
-}
+  try {
+    // get user token
+    const token = await getToken(req.params.id)
+    if (!token) {
+      const message = `could not find token for user ID "${req.params.id}"`
+      return res.status(404).send({message})
+    }
+    const memberships = await webex.getMemberships({token})
+    return res.status(200).send(memberships)
+  } catch (error) {
+    console.log('admin get user room membership list failed:', error.message)
+    return res.status(500).send({message: error.message})
+  }
+})
 
 // admin get user webhook list
 router.get('/:id/webhook', async function (req, res, next) {
@@ -149,9 +175,34 @@ router.get('/:id/webhook', async function (req, res, next) {
   }
 })
 
+// admin delete user webhook list
+router.delete('/:userId/webhook/:webhookId', async function (req, res, next) {
+  if (!isAdmin(req.user)) {
+    const message = 'you do not have permission to access this resource'
+    return res.status(403).send({message})
+  }
+  try {
+    // get user token
+    const token = await getToken(req.params.userId)
+    if (!token) {
+      const message = `could not find token for user ID "${req.params.userId}"`
+      return res.status(404).send({message})
+    }
+    await webex.deleteWebhook({
+      token,
+      id: req.params.webhookId
+    })
+    return res.status(200).send()
+  } catch (error) {
+    console.log(error)
+    console.log('admin delete user webhook failed:', error.message)
+    return res.status(500).send({message: error.message})
+  }
+})
+
 // admin create user webhook
 router.post('/:id/webhook', async function (req, res, next) {
-  console.log('create webhook for id', req.params.id)
+  // console.log('create webhook for id', req.params.id)
   if (!isAdmin(req.user)) {
     const message = 'you do not have permission to access this resource'
     return res.status(403).send({message})
@@ -176,6 +227,124 @@ router.post('/:id/webhook', async function (req, res, next) {
   } catch (error) {
     console.log('admin create webhook failed:', error.message)
     return res.status(500).send({message: error.message})
+  }
+})
+
+// admin join user to room (create membership)
+router.post('/:userId/join/:roomId', async function (req, res, next) {
+  if (!isAdmin(req.user)) {
+    const message = 'you do not have permission to access this resource'
+    return res.status(403).send({message})
+  }
+  if (req.params.userId.length !== 24) {
+    // invalid ID
+    const message = `the user ID you specified is invalid: "${req.params.userId}"`
+    return res.status(400).send({message})
+  }
+  try {
+    // get user token
+    const user = await getUser(req.params.userId)
+    if (!user) {
+      const message = `could not find token for user ID "${req.params.userId}"`
+      return res.status(404).send({message})
+    }
+    await webex.createMembership({
+      token: user.token.access_token,
+      roomId: req.params.roomId,
+      personId: user.personId
+    })
+    return res.status(200).send()
+  } catch (error) {
+    console.log('admin join user to room failed:', error)
+    return res.status(500).send({message: error.message})
+  }
+})
+
+// admin create user and staff room pair
+router.post('/:userId/rooms', async function (req, res, next) {
+  if (!isAdmin(req.user)) {
+    const message = 'you do not have permission to access this resource'
+    return res.status(403).send({message})
+  }
+  if (req.params.userId.length !== 24) {
+    // invalid ID
+    const message = `the user ID you specified is invalid: "${req.params.userId}"`
+    return res.status(400).send({message})
+  }
+  try {
+    // get user token
+    const user = await getUser(req.params.userId)
+    if (!user) {
+      const message = `could not find token for user ID "${req.params.userId}"`
+      return res.status(404).send({message})
+    }
+    // create staff room
+    const staffRoom = await webex.createRoom({
+      token: user.token.access_token,
+      title: req.body.staffRoomTitle
+    })
+    // create user room
+    const userRoom = await webex.createRoom({
+      token: user.token.access_token,
+      title: req.body.userRoomTitle
+    })
+    // add room to database
+    const query = {
+      _id: db.ObjectID(req.params.userId)
+    }
+    const updates = {
+      $push: {
+        rooms: {
+          staffRoomId: staffRoom.id,
+          userRoomId: userRoom.id,
+          name: req.body.name
+        }
+      }
+    }
+    await db.updateOne('helper', 'user', query, updates)
+    return res.status(200).send()
+  } catch (error) {
+    console.log('admin create new support room pair failed:', error)
+    return res.status(500).send({message: error.message})
+  }
+})
+
+// admin add arbitrary user to a bot's room
+router.post('/:userId/room/:roomId/membership', async function (req, res, next) {
+  // admin only
+  if (!isAdmin(req.user)) {
+    const message = 'you do not have permission to access this resource'
+    return res.status(403).send({message})
+  }
+  // validate user ID
+  if (req.params.userId.length !== 24) {
+    // invalid user ID
+    const message = `the user ID you specified is invalid: "${req.params.userId}"`
+    return res.status(400).send({message})
+  }
+  try {
+    // get user token
+    const user = await getUser(req.params.userId)
+    if (!user) {
+      const message = `could not find token for user ID "${req.params.userId}"`
+      return res.status(404).send({message})
+    }
+    const data = {
+      token: user.token.access_token,
+      roomId: req.params.roomId,
+      personEmail: req.body.personEmail
+    }
+    await webex.createMembership(data)
+    return res.status(200).send()
+  } catch (error) {
+    if (error.status === 409) {
+      // already in room
+      return res.status(409).send({message: error.message})
+    } else {
+      // unexpected error
+      console.log('admin add person to bot room failed:', error)
+      return res.status(500).send({message: error.message})
+    }
   }
 })
 
