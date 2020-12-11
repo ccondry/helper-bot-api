@@ -35,8 +35,12 @@ module.exports = async function (url, options = {}) {
     const response = await fetch(completeUrl, options)
     const text = await response.text()
     if (response.ok) {
-      const json = JSON.parse(text)
-      return json
+      try {
+        const json = JSON.parse(text)
+        return json
+      } catch (e) {
+        return text
+      }
     } else {
       let message = text
       try {
