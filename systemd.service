@@ -1,6 +1,6 @@
 [Unit]
 # this is the daemon for running the helper-bot-api REST API node.js service
-Description=GoCMS web portal REST API
+Description=Helper Bot web portal REST API
 # make sure we have network connection before starting
 After=network.target
 
