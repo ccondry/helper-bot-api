@@ -4,3 +4,4 @@ rsa-private.pem
 rsa-public.pem
 ad1.pem
 ca.pem
+.DS_Store
