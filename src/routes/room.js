@@ -53,16 +53,19 @@ router.get('/', async function (req, res, next) {
     const rooms = []
     for (const user of users) {
       for (const room of user.rooms) {
-        // get current title of room
-        const title = await webex.getRoomName({
-          roomId: room.userRoomId,
-          token: user.token.access_token
-        })
-        // add room details to list
-        rooms.push({
-          id: room.userRoomId,
-          title
-        })
+        // ignore hidden rooms
+        if (!room.hidden) {
+          // get current title of room
+          const title = await webex.getRoomName({
+            roomId: room.userRoomId,
+            token: user.token.access_token
+          })
+          // add room details to list
+          rooms.push({
+            id: room.userRoomId,
+            title
+          })
+        }
       }
     }
 
