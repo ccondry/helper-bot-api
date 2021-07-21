@@ -4,6 +4,12 @@ Version numbers are semver-compatible dates in YYYY.MM.DD-X format,
 where X is the revision number
 
 
+# 2021.7.21-2
+
+### Fixes
+* **Create Webhooks:** Fix typo in creating messages.updated webhook.
+
+
 # 2021.7.21-1
 
 ### Fixes
