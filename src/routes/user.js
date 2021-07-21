@@ -238,7 +238,7 @@ router.post('/:id/webhook', async function (req, res, next) {
       name: 'mm-helper-updated',
       token: user.token.access_token,
       secret: user.webhookSecret,
-      event: 'udpated'
+      event: 'updated'
     })
     return res.status(200).send()
   } catch (error) {
