@@ -1,6 +1,6 @@
 {
   "name": "helper-bot-api",
-  "version": "2021.3.24",
+  "version": "2021.7.21",
   "description": "REST API for the dCloud Helper Bot admin web portal",
   "main": "src/index.js",
   "scripts": {
