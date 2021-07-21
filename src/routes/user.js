@@ -219,9 +219,23 @@ router.post('/:id/webhook', async function (req, res, next) {
       const message = `could not find token for user ID "${req.params.id}"`
       return res.status(404).send({message})
     }
+    // messages created
     await webex.createWebhook({
       token: user.token.access_token,
-      secret: user.webhookSecret
+      secret: user.webhookSecret,
+      event: 'created'
+    })
+    // messages deleted
+    await webex.createWebhook({
+      token: user.token.access_token,
+      secret: user.webhookSecret,
+      event: 'deleted'
+    })
+    // messages udpated
+    await webex.createWebhook({
+      token: user.token.access_token,
+      secret: user.webhookSecret,
+      event: 'udpated'
     })
     return res.status(200).send()
   } catch (error) {
