@@ -221,18 +221,21 @@ router.post('/:id/webhook', async function (req, res, next) {
     }
     // messages created
     await webex.createWebhook({
+      name: 'mm-helper-created',
       token: user.token.access_token,
       secret: user.webhookSecret,
       event: 'created'
     })
     // messages deleted
     await webex.createWebhook({
+      name: 'mm-helper-deleted',
       token: user.token.access_token,
       secret: user.webhookSecret,
       event: 'deleted'
     })
     // messages udpated
     await webex.createWebhook({
+      name: 'mm-helper-updated',
       token: user.token.access_token,
       secret: user.webhookSecret,
       event: 'udpated'

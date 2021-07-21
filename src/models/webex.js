@@ -45,7 +45,13 @@ async function joinRoom ({roomId, email, token}) {
   return fetch(url, options)
 }
 
-async function createWebhook ({token, secret, resource = 'messages', event = 'created'}) {
+async function createWebhook ({
+  name, 
+  token,
+  secret,
+  resource = 'messages',
+  event = 'created'
+}) {
   const url = 'https://webexapis.com/v1/webhooks/'
   const options = {
     method: 'POST',
@@ -53,7 +59,7 @@ async function createWebhook ({token, secret, resource = 'messages', event = 'cr
       Authorization: 'Bearer ' + token
     },
     body: {
-      name: 'mm-helper',
+      name,
       targetUrl: 'https://mm-helper.cxdemo.net/api/v1/webhook',
       resource,
       event,
