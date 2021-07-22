@@ -33,7 +33,7 @@ async function authorize ({code, redirectUri, rooms}) {
     redirect_uri: redirectUri
   }
 
-  console.log('webex oauth2 authorize body:', body)
+  // console.log('webex oauth2 authorize body:', body)
   // encode the body for x-www-form-urlencoded
   const encodedBody = urlEncode(body)
   // get the token from webex
