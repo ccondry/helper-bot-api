@@ -318,6 +318,18 @@ router.post('/:userId/rooms', async function (req, res, next) {
         }
       }
     }
+
+    // create direct room if it doesn't exist for this bot yet
+    if (!user.directRoomId) {
+      const directRoom = await webex.createRoom({
+        token: user.token.access_token,
+        title: req.body.directRoomTitle
+      })
+      updates.$set = {
+        directRoomId: directRoom.id
+      }
+    }
+
     await db.updateOne('helper', 'user', query, updates)
     return res.status(200).send()
   } catch (error) {
