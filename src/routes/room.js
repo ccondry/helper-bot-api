@@ -63,7 +63,8 @@ router.get('/', async function (req, res, next) {
           // add room details to list
           rooms.push({
             id: room.userRoomId,
-            title
+            title,
+            bot: user.personEmail
           })
         }
       }
