@@ -5,14 +5,35 @@ const makeJwt = require('../models/make-jwt')
 const isAdmin = require('../models/is-admin')
 const teamsLogger = require('../models/teams-logger')
 
+// get the version of this software and SSO login information
+router.get('/', async (req, res, next) => {
+  const data = {
+    clientId: model.clientId,
+    scopes: model.scopes,
+    infoUrl: model.infoUrl,
+  }
+  return res.status(200).send(data)
+})
+
 // complete cisco SSO login
 router.post('/', async (req, res, next) => {
-  let token
+  let me
   try {
-    token = await model.authorize({
+    if (!req.body.code || !req.body.code.length) {
+      const message = 'You must include an OAUTH2 code to complete login.'
+      return res.status(400).send({message})
+    }
+    // authorize oauth2 code and get token
+    const params = {
       code: req.body.code,
-      redirectUri: req.headers.referer.split('?')[0].split('#')[0]
-    })
+      redirectUri: req.headers.origin + '/'
+    }
+    // console.log('sso login body params:', req.body)
+    // console.log('sso auth params:', params)
+    const token = await model.authorize(params)
+    // console.log('token', token)
+    // get user details from Cisco
+    me = await model.verifyOauth2Token(token.id_token)
   } catch (e) {
     // console.log('failed to get access token from authorization code', req.body.code, ':', e.message)
     if (e.status && e.text) {
@@ -26,31 +47,32 @@ router.post('/', async (req, res, next) => {
       return res.status(500).send({message})
     }
   }
-
-  let me
-  try {
-    // get user profile with their access token
-    me = await model.me(token.access_token)
-  } catch (e) {
-    let message = ''
-    if (e.response.headers.get('content-type').match(/text\/html/i)) {
-      // don't return html content
-      message = 'Failed to get user profile from access token: ' + e.statusText
-    } else {
-      message = 'Failed to get user profile from access token: ' + e.message
-    }
-    console.log(message)
-    teamsLogger.log(message)
-    return res.status(500).send({message})
-  }
-  // remove memberof list, which can be a long list of data
-  delete me.memberof
-  // set admin flag
-  me.isAdmin = isAdmin(me)
+  // console.log('me', me)
+  // remove memberof, which can be a long list of data
+  // delete me.memberof
+  // console.log('trimmed me', me)
   // make the JWT of the user profile data
-  const jwt = makeJwt(me)
-  // return the new JWT
-  return res.status(200).send({jwt})
+  try {
+    const jwtPayload = {
+      // set admin flag
+      isAdmin: isAdmin(me),
+      // set hashed username 
+      sAMAccountName: getHash(me.federated_id),
+      federated_id: me.federated_id,
+      email: me.email,
+      access_level: me.access_level,
+      full_name: me.full_name,
+      first_name: me.first_name,
+      last_name: me.last_name,
+      ccoid: me.ccoid,
+    }
+    const jwt = makeJwt(jwtPayload)
+    // return the new JWT
+    return res.status(200).send({jwt})
+  } catch (e) {
+    console.log(e)
+    return res.status(500).send({message: e.message})
+  }
 })
 
 module.exports = router
