@@ -4,6 +4,12 @@ Version numbers are semver-compatible dates in YYYY.MM.DD-X format,
 where X is the revision number
 
 
+# 2023.6.14
+
+### Features
+* **Login:** Update SSO provider.
+
+
 # 2021.9.10
 
 ### Features
